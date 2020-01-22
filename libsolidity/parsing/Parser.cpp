@@ -1741,6 +1741,14 @@ ASTPointer<Expression> Parser::parseLeftHandSideExpression(
 		}
 		case Token::LBrace:
 		{
+			// See if this is followed by <identifier>, followed by ":". If not, it is not
+			// a function call options but a Block (from a try statement).
+			if (
+				m_scanner->peekNextToken() != Token::Identifier ||
+				m_scanner->peekNextNextToken() != Token::Colon
+			)
+				return expression;
+
 			expectToken(Token::LBrace);
 			auto optionList = parseNamedArguments();
 
