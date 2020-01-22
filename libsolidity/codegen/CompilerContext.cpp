@@ -296,12 +296,13 @@ CompilerContext& CompilerContext::appendConditionalInvalid()
 	return *this;
 }
 
-CompilerContext& CompilerContext::appendRevert()
+CompilerContext& CompilerContext::appendRevert(string const& _message)
 {
-	return *this << u256(0) << u256(0) << Instruction::REVERT;
+	appendInlineAssembly("{ " + revertString(_message) + " }");
+	return *this;
 }
 
-CompilerContext& CompilerContext::appendConditionalRevert(bool _forwardReturnData)
+CompilerContext& CompilerContext::appendConditionalRevert(bool _forwardReturnData, string const& _message)
 {
 	if (_forwardReturnData && m_evmVersion.supportsReturndata())
 		appendInlineAssembly(R"({
@@ -311,9 +312,7 @@ CompilerContext& CompilerContext::appendConditionalRevert(bool _forwardReturnDat
 			}
 		})", {"condition"});
 	else
-		appendInlineAssembly(R"({
-			if condition { revert(0, 0) }
-		})", {"condition"});
+		appendInlineAssembly("{ if condition { " + revertString(_message) + " }", {"condition"});
 	*this << Instruction::POP;
 	return *this;
 }
@@ -486,6 +485,14 @@ vector<ContractDefinition const*>::const_iterator CompilerContext::superContract
 	auto it = find(m_inheritanceHierarchy.begin(), m_inheritanceHierarchy.end(), &_contract);
 	solAssert(it != m_inheritanceHierarchy.end(), "Base not found in inheritance hierarchy.");
 	return ++it;
+}
+
+string CompilerContext::revertString(string const& _message) const
+{
+	if (m_revertStrings == RevertStrings::Debug && !_message.empty())
+		solAssert(false, "");
+	else
+		return "revert(0, 0)";
 }
 
 void CompilerContext::updateSourceLocation()

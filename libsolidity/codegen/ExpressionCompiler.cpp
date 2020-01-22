@@ -655,7 +655,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			}
 			else
 				// TODO: Can we bubble up here? There might be different reasons for failure, I think.
-				m_context.appendConditionalRevert(true);
+				m_context.appendConditionalRevert(true, "Uncaught exception in contract creation");
 			break;
 		}
 		case FunctionType::Kind::SetGas:
@@ -713,7 +713,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 				// Check if zero (out of stack or not enough balance).
 				// TODO: bubble up here, but might also be different error.
 				m_context << Instruction::ISZERO;
-				m_context.appendConditionalRevert(true);
+				m_context.appendConditionalRevert(true, "Probably out of stack or not enough balance during transfer");
 			}
 			break;
 		case FunctionType::Kind::Selfdestruct:
@@ -723,13 +723,13 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 		case FunctionType::Kind::Revert:
 		{
 			if (arguments.empty())
-				m_context.appendRevert();
+				m_context.appendRevert("Revert without reason");
 			else
 			{
 				// function-sel(Error(string)) + encoding
 				solAssert(arguments.size() == 1, "");
 				solAssert(function.parameterTypes().size() == 1, "");
-				if (m_revertStrings == RevertStrings::Strip)
+				if (m_context.revertStrings() == RevertStrings::Strip)
 				{
 					if (!arguments.front()->annotation().isPure)
 					{
@@ -1009,7 +1009,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 		{
 			acceptAndConvert(*arguments.front(), *function.parameterTypes().front(), false);
 
-			bool haveReasonString = arguments.size() > 1 && m_revertStrings != RevertStrings::Strip;
+			bool haveReasonString = arguments.size() > 1 && m_context.revertStrings() != RevertStrings::Strip;
 
 			if (arguments.size() > 1)
 			{
@@ -1018,7 +1018,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 				// function call.
 				solAssert(arguments.size() == 2, "");
 				solAssert(function.kind() == FunctionType::Kind::Require, "");
-				if (m_revertStrings == RevertStrings::Strip)
+				if (m_context.revertStrings() == RevertStrings::Strip)
 				{
 					if (!arguments.at(1)->annotation().isPure)
 					{
@@ -1046,7 +1046,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 				m_context.adjustStackOffset(arguments.at(1)->annotation().type->sizeOnStack());
 			}
 			else
-				m_context.appendRevert();
+				m_context.appendRevert("Revert without reason");
 			// the success branch
 			m_context << success;
 			if (haveReasonString)
@@ -1755,12 +1755,16 @@ bool ExpressionCompiler::visit(IndexRangeAccess const& _indexAccess)
 
 	m_context.appendInlineAssembly(
 		Whiskers(R"({
-					if gt(sliceStart, sliceEnd) { revert(0, 0) }
-					if gt(sliceEnd, length) { revert(0, 0) }
+					if gt(sliceStart, sliceEnd) { <revertStringStartEnd> }
+					if gt(sliceEnd, length) { <revertStringEndLength> }
 
 					offset := add(offset, mul(sliceStart, <stride>))
 					length := sub(sliceEnd, sliceStart)
-				})")("stride", toString(arrayType->calldataStride())).render(),
+				})")
+		("stride", toString(arrayType->calldataStride()))
+		("revertStringStartEnd", m_context.revertString("Slice starts after end"))
+		("revertStringEndLength", m_context.revertString("Slice is greater than length"))
+		.render(),
 		{"offset", "length", "sliceStart", "sliceEnd"}
 	);
 
@@ -2234,7 +2238,7 @@ void ExpressionCompiler::appendExternalFunctionCall(
 	{
 		m_context << Instruction::DUP1 << Instruction::EXTCODESIZE << Instruction::ISZERO;
 		// TODO: error message?
-		m_context.appendConditionalRevert();
+		m_context.appendConditionalRevert("Target contract does not contain code");
 		existenceChecked = true;
 	}
 
@@ -2274,7 +2278,7 @@ void ExpressionCompiler::appendExternalFunctionCall(
 	{
 		// Propagate error condition (if CALL pushes 0 on stack).
 		m_context << Instruction::ISZERO;
-		m_context.appendConditionalRevert(true);
+		m_context.appendConditionalRevert(true, "Uncaught exception thrown");
 	}
 	else
 		m_context << swapInstruction(remainsSize);

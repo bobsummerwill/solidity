@@ -129,7 +129,7 @@ void ContractCompiler::appendCallValueCheck()
 	// Throw if function is not payable but call contained ether.
 	m_context << Instruction::CALLVALUE;
 	// TODO: error message?
-	m_context.appendConditionalRevert();
+	m_context.appendConditionalRevert("Ether sent to non payable function");
 }
 
 void ContractCompiler::appendInitAndConstructorCode(ContractDefinition const& _contract)
@@ -409,7 +409,7 @@ void ContractCompiler::appendFunctionSelector(ContractDefinition const& _contrac
 	m_context << notFoundOrReceiveEther;
 
 	if (!fallback && !etherReceiver)
-		m_context.appendRevert();
+		m_context.appendRevert("Contract cannot receive Ether");
 	else
 	{
 		if (etherReceiver)
@@ -441,7 +441,7 @@ void ContractCompiler::appendFunctionSelector(ContractDefinition const& _contrac
 		}
 		else
 			// TODO: error message here?
-			m_context.appendRevert();
+			m_context.appendRevert("Contract cannot receive Ether");
 	}
 
 
@@ -457,7 +457,7 @@ void ContractCompiler::appendFunctionSelector(ContractDefinition const& _contrac
 			// If the function is not a view function and is called without DELEGATECALL,
 			// we revert.
 			m_context << dupInstruction(2);
-			m_context.appendConditionalRevert();
+			m_context.appendConditionalRevert("Non view function called without DELEGATECALL");
 		}
 		m_context.setStackOffset(0);
 		// We have to allow this for libraries, because value of the previous
@@ -517,7 +517,7 @@ void ContractCompiler::initializeStateVariables(ContractDefinition const& _contr
 	solAssert(!_contract.isLibrary(), "Tried to initialize state variables of library.");
 	for (VariableDeclaration const* variable: _contract.stateVariables())
 		if (variable->value() && !variable->isConstant())
-			ExpressionCompiler(m_context, m_revertStrings, m_optimiserSettings.runOrderLiterals).appendStateVariableInitialization(*variable);
+			ExpressionCompiler(m_context, m_optimiserSettings.runOrderLiterals).appendStateVariableInitialization(*variable);
 }
 
 bool ContractCompiler::visit(VariableDeclaration const& _variableDeclaration)
@@ -530,10 +530,10 @@ bool ContractCompiler::visit(VariableDeclaration const& _variableDeclaration)
 	m_continueTags.clear();
 
 	if (_variableDeclaration.isConstant())
-		ExpressionCompiler(m_context, m_revertStrings, m_optimiserSettings.runOrderLiterals)
+		ExpressionCompiler(m_context, m_optimiserSettings.runOrderLiterals)
 			.appendConstStateVariableAccessor(_variableDeclaration);
 	else
-		ExpressionCompiler(m_context, m_revertStrings, m_optimiserSettings.runOrderLiterals)
+		ExpressionCompiler(m_context, m_optimiserSettings.runOrderLiterals)
 			.appendStateVariableAccessor(_variableDeclaration);
 
 	return false;
@@ -954,7 +954,7 @@ void ContractCompiler::handleCatch(vector<ASTPointer<TryCatchClause>> const& _ca
 				revert(0, returndatasize())
 			})");
 		else
-			m_context.appendRevert();
+			m_context.appendRevert("Uncaught exception thrown");
 	}
 	m_context << endTag;
 }
@@ -1316,7 +1316,7 @@ void ContractCompiler::appendStackVariableInitialisation(VariableDeclaration con
 
 void ContractCompiler::compileExpression(Expression const& _expression, TypePointer const& _targetType)
 {
-	ExpressionCompiler expressionCompiler(m_context, m_revertStrings, m_optimiserSettings.runOrderLiterals);
+	ExpressionCompiler expressionCompiler(m_context, m_optimiserSettings.runOrderLiterals);
 	expressionCompiler.compile(_expression);
 	if (_targetType)
 		CompilerUtils(m_context).convertType(*_expression.annotation().type, *_targetType);

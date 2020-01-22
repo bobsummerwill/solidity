@@ -38,8 +38,8 @@ public:
 	Compiler(langutil::EVMVersion _evmVersion, RevertStrings _revertStrings, OptimiserSettings _optimiserSettings):
 		m_optimiserSettings(std::move(_optimiserSettings)),
 		m_revertStrings(_revertStrings),
-		m_runtimeContext(_evmVersion),
-		m_context(_evmVersion, &m_runtimeContext)
+		m_runtimeContext(_evmVersion, _revertStrings),
+		m_context(_evmVersion, _revertStrings, &m_runtimeContext)
 	{ }
 
 	/// Compiles a contract.

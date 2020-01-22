@@ -137,7 +137,10 @@ bytes compileFirstExpression(
 			FirstExpressionExtractor extractor(*contract);
 			BOOST_REQUIRE(extractor.expression() != nullptr);
 
-			CompilerContext context(solidity::test::Options::get().evmVersion());
+			CompilerContext context(
+				solidity::test::Options::get().evmVersion(),
+				RevertStrings::Default
+			);
 			context.resetVisitedNodes(contract);
 			context.setInheritanceHierarchy(inheritanceHierarchy);
 			unsigned parametersSize = _localVariables.size(); // assume they are all one slot on the stack
@@ -150,7 +153,6 @@ bytes compileFirstExpression(
 
 			ExpressionCompiler(
 				context,
-				RevertStrings::Default,
 				solidity::test::Options::get().optimize
 			).compile(*extractor.expression());
 
