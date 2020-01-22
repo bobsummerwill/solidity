@@ -2224,37 +2224,100 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 	return false;
 }
 
-void TypeChecker::endVisit(FunctionCallOptions const& _functionCallOptions)
+bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 {
-	bool setSalt = false, setValue = false, setGas = false;
+	bool setSalt = false;
+	bool setValue = false;
+	bool setGas = false;
 
 	solAssert(_functionCallOptions.options().size() == _functionCallOptions.names().size(), "Lengths of name & value arrays differ!");
 
-	for (auto name: _functionCallOptions.names())
-		if (*name == "salt")
-			setSalt =  true;
-		else if (*name == "value")
-			setValue = true;
-		else if (*name == "gas")
-			setGas = true;
+	_functionCallOptions.expression().accept(*this);
+
+	auto expressionFunctionType = dynamic_cast<FunctionType const*>(type(_functionCallOptions.expression()));
+	if (!expressionFunctionType)
+	{
+		m_errorReporter.fatalTypeError(_functionCallOptions.location(), "Expected callable expression before call options.");
+		return false;
+	}
+	FunctionType::Kind kind = expressionFunctionType->kind();
+	if (
+		kind != FunctionType::Kind::Creation &&
+		kind != FunctionType::Kind::External &&
+		kind != FunctionType::Kind::BareCall &&
+		kind != FunctionType::Kind::BareCallCode &&
+		kind != FunctionType::Kind::BareDelegateCall &&
+		kind != FunctionType::Kind::BareStaticCall
+	)
+	{
+		m_errorReporter.fatalTypeError(
+			_functionCallOptions.location(),
+			"Function call options can only be set on external function calls or contract creations."
+		);
+		return false;
+	}
+
+	for (size_t i = 0; i < _functionCallOptions.names().size(); ++i)
+	{
+		string const& name = *(_functionCallOptions.names()[i]);
+		if (name == "salt")
+		{
+			if (kind == FunctionType::Kind::Creation)
+			{
+				setSalt = true;
+				expectType(*_functionCallOptions.options()[i], *TypeProvider::fixedBytes(32));
+			}
+			else
+				m_errorReporter.typeError(
+					_functionCallOptions.location(),
+					"Function call option \"salt\" can only be used with \"new\"."
+				);
+		}
+		else if (name == "value")
+		{
+			if (kind == FunctionType::Kind::BareDelegateCall)
+				m_errorReporter.typeError(
+					_functionCallOptions.location(),
+					"Cannot set option \"value\" for delegatecall."
+				);
+			else if (kind == FunctionType::Kind::BareStaticCall)
+				m_errorReporter.typeError(
+					_functionCallOptions.location(),
+					"Cannot set option \"value\" for staticcall."
+				);
+			else if (!expressionFunctionType->isPayable())
+				m_errorReporter.typeError(
+					_functionCallOptions.location(),
+					"Cannot set option \"value\" on a non-payable function type."
+				);
+			else
+			{
+				expectType(*_functionCallOptions.options()[i], *TypeProvider::uint256());
+				setValue = true;
+			}
+		}
+		else if (name == "gas")
+		{
+			if (kind == FunctionType::Kind::Creation)
+				m_errorReporter.typeError(
+					_functionCallOptions.location(),
+					"Function call option \"gas\" cannot be used with \"new\"."
+				);
+			else
+			{
+				expectType(*_functionCallOptions.options()[i], *TypeProvider::uint256());
+				setGas = true;
+			}
+		}
 		else
 			m_errorReporter.typeError(
 				_functionCallOptions.location(),
-				"Unknown call option \"" + *name + "\". Valid options are \"salt\", \"value\" and \"gas\"."
+				"Unknown call option \"" + name + "\". Valid options are \"salt\", \"value\" and \"gas\"."
 			);
-
-	if (auto expressionFunctionType = dynamic_cast<FunctionType const*>(type(_functionCallOptions.expression())))
-	{
-		if (expressionFunctionType->kind() == FunctionType::Kind::Creation && setGas)
-		{
-			m_errorReporter.typeError(_functionCallOptions.location(), "\"gas\" cannot be used with \"new\".");
-			setSalt = false;
-		}
-
-		_functionCallOptions.annotation().type = expressionFunctionType->copyAndSetCallOptions(setGas, setValue, setSalt);
 	}
-	else
-		m_errorReporter.fatalTypeError(_functionCallOptions.location(), "Expected callable expression before call options.");
+
+	_functionCallOptions.annotation().type = expressionFunctionType->copyAndSetCallOptions(setGas, setValue, setSalt);
+	return false;
 }
 
 void TypeChecker::endVisit(NewExpression const& _newExpression)

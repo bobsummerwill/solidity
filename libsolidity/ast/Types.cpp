@@ -2741,6 +2741,8 @@ string FunctionType::richIdentifier() const
 		id += "gas";
 	if (m_valueSet)
 		id += "value";
+	if (m_saltSet)
+		id += "salt";
 	if (bound())
 		id += "bound_to" + identifierList(selfType());
 	return id;
@@ -3011,7 +3013,8 @@ MemberList::MemberMap FunctionType::nativeMembers(ContractDefinition const* _sco
 						StateMutability::Pure,
 						nullptr,
 						m_gasSet,
-						m_valueSet
+						m_valueSet,
+						m_saltSet
 					)
 				);
 		}
@@ -3028,7 +3031,8 @@ MemberList::MemberMap FunctionType::nativeMembers(ContractDefinition const* _sco
 					StateMutability::Pure,
 					nullptr,
 					m_gasSet,
-					m_valueSet
+					m_valueSet,
+					m_saltSet
 				)
 			);
 		return members;
@@ -3151,7 +3155,7 @@ bool FunctionType::equalExcludingStateMutability(FunctionType const& _other) con
 		return false;
 
 	//@todo this is ugly, but cannot be prevented right now
-	if (m_gasSet != _other.m_gasSet || m_valueSet != _other.m_valueSet)
+	if (m_gasSet != _other.m_gasSet || m_valueSet != _other.m_valueSet || m_saltSet != _other.m_saltSet)
 		return false;
 
 	if (bound() != _other.bound())
@@ -3266,8 +3270,8 @@ TypePointer FunctionType::copyAndSetCallOptions(bool _setGas, bool _setValue, bo
 		m_declaration,
 		m_gasSet || _setGas,
 		m_valueSet || _setValue,
-		m_bound,
-		m_saltSet || _setSalt
+		m_saltSet || _setSalt,
+		m_bound
 	);
 }
 
@@ -3307,6 +3311,7 @@ FunctionTypePointer FunctionType::asCallableFunction(bool _inLibrary, bool _boun
 		m_declaration,
 		m_gasSet,
 		m_valueSet,
+		m_saltSet,
 		_bound
 	);
 }
