@@ -2224,6 +2224,39 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 	return false;
 }
 
+void TypeChecker::endVisit(FunctionCallOptions const& _functionCallOptions)
+{
+	bool setSalt = false, setValue = false, setGas = false;
+
+	solAssert(_functionCallOptions.options().size() == _functionCallOptions.names().size(), "Lengths of name & value arrays differ!");
+
+	for (auto name: _functionCallOptions.names())
+		if (*name == "salt")
+			setSalt =  true;
+		else if (*name == "value")
+			setValue = true;
+		else if (*name == "gas")
+			setGas = true;
+		else
+			m_errorReporter.typeError(
+				_functionCallOptions.location(),
+				"Unknown call option \"" + *name + "\". Valid options are \"salt\", \"value\" and \"gas\"."
+			);
+
+	if (auto expressionFunctionType = dynamic_cast<FunctionType const*>(type(_functionCallOptions.expression())))
+	{
+		if (expressionFunctionType->kind() == FunctionType::Kind::Creation && setGas)
+		{
+			m_errorReporter.typeError(_functionCallOptions.location(), "\"gas\" cannot be used with \"new\".");
+			setSalt = false;
+		}
+
+		_functionCallOptions.annotation().type = expressionFunctionType->copyAndSetCallOptions(setGas, setValue, setSalt);
+	}
+	else
+		m_errorReporter.fatalTypeError(_functionCallOptions.location(), "Expected callable expression before call options.");
+}
+
 void TypeChecker::endVisit(NewExpression const& _newExpression)
 {
 	TypePointer type = _newExpression.typeName().annotation().type;

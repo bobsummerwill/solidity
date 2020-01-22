@@ -2918,6 +2918,8 @@ unsigned FunctionType::sizeOnStack() const
 		size++;
 	if (m_valueSet)
 		size++;
+	if (m_saltSet)
+		size++;
 	if (bound())
 		size += m_parameterTypes.front()->sizeOnStack();
 	return size;
@@ -3001,7 +3003,7 @@ MemberList::MemberMap FunctionType::nativeMembers(ContractDefinition const* _sco
 					"value",
 					TypeProvider::function(
 						parseElementaryTypeVector({"uint"}),
-						TypePointers{copyAndSetGasOrValue(false, true)},
+						TypePointers{copyAndSetCallOptions(false, true, false)},
 						strings(1, ""),
 						strings(1, ""),
 						Kind::SetValue,
@@ -3018,7 +3020,7 @@ MemberList::MemberMap FunctionType::nativeMembers(ContractDefinition const* _sco
 				"gas",
 				TypeProvider::function(
 					parseElementaryTypeVector({"uint"}),
-					TypePointers{copyAndSetGasOrValue(true, false)},
+					TypePointers{copyAndSetCallOptions(true, false, false)},
 					strings(1, ""),
 					strings(1, ""),
 					Kind::SetGas,
@@ -3250,7 +3252,7 @@ TypePointers FunctionType::parseElementaryTypeVector(strings const& _types)
 	return pointers;
 }
 
-TypePointer FunctionType::copyAndSetGasOrValue(bool _setGas, bool _setValue) const
+TypePointer FunctionType::copyAndSetCallOptions(bool _setGas, bool _setValue, bool _setSalt) const
 {
 	solAssert(m_kind != Kind::Declaration, "");
 	return TypeProvider::function(
@@ -3264,7 +3266,8 @@ TypePointer FunctionType::copyAndSetGasOrValue(bool _setGas, bool _setValue) con
 		m_declaration,
 		m_gasSet || _setGas,
 		m_valueSet || _setValue,
-		m_bound
+		m_bound,
+		m_saltSet || _setSalt
 	);
 }
 
