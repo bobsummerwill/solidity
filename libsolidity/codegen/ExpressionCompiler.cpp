@@ -634,15 +634,34 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			utils().copyContractCodeToMemory(*contract, true);
 			utils().abiEncode(argumentTypes, function.parameterTypes());
 			// now on stack: memory_end_ptr
-			// need: size, offset, endowment
+			// need: [salt], size, offset, endowment
+
+			if (function.saltSet())
+			{
+				m_context << dupInstruction(2 + (function.valueSet() ? 1 : 0));
+				m_context << Instruction::SWAP1;
+			}
+
+			// now: [salt], memory_end_ptr
 			utils().toSizeAfterFreeMemoryPointer();
+
+			// now: [salt], size, offset
 			if (function.valueSet())
-				m_context << dupInstruction(3);
+				m_context << dupInstruction(3 + (function.saltSet() ? 1 : 0));
 			else
 				m_context << u256(0);
-			m_context << Instruction::CREATE;
+
+			// now: [salt], size, offset, endowment
+			if (function.saltSet())
+				m_context << Instruction::CREATE2;
+			else
+				m_context << Instruction::CREATE;
+
 			if (function.valueSet())
 				m_context << swapInstruction(1) << Instruction::POP;
+			if (function.saltSet())
+				m_context << swapInstruction(1) << Instruction::POP;
+
 			// Check if zero (reverted)
 			m_context << Instruction::DUP1 << Instruction::ISZERO;
 			if (_functionCall.annotation().tryCall)
@@ -1189,6 +1208,31 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			break;
 		}
 	}
+	return false;
+}
+
+bool ExpressionCompiler::visit(FunctionCallOptions const& _functionCallOptions)
+{
+	// Desired Stack: [salt], [gas], [value]
+	enum { Salt, Gas, Value };
+	int optionIndicies[3] = {-1, -1, -1};
+
+	vector<ASTPointer<ASTString>> const& names = _functionCallOptions.names();
+
+	for (size_t i = 0; i < names.size(); i++)
+		if (*names[i] == "salt")
+			optionIndicies[Salt] = i;
+		else if (*names[i] == "gas")
+				optionIndicies[Gas] = i;
+		else if (*names[i] == "value")
+				optionIndicies[Value] = i;
+		else
+			solAssert(false, "Unexpected option name!");
+
+	for (int index: optionIndicies)
+		if (index >= 0)
+			_functionCallOptions.options()[index]->accept(*this);
+
 	return false;
 }
 
