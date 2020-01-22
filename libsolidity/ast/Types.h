@@ -1098,8 +1098,8 @@ public:
 		Declaration const* _declaration = nullptr,
 		bool _gasSet = false,
 		bool _valueSet = false,
-		bool _bound = false,
-		bool _saltSet = false
+		bool _saltSet = false,
+		bool _bound = false
 	):
 		m_parameterTypes(_parameterTypes),
 		m_returnParameterTypes(_returnParameterTypes),
