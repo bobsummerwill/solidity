@@ -666,7 +666,7 @@ static YPR<Block> addVarDecl(
 			},
 			_message,
 			_seed,
-			YPM::s_highIP,
+			1,
 			"Add variable declaration to statement block"
 		);
 	}
@@ -690,7 +690,7 @@ static YPR<Block> addMultiVarDecl(
 			},
 			_message,
 			_seed,
-			YPM::s_highIP,
+			1,
 			"Add multi variable declaration to statement block"
 		);
 	}
@@ -1208,7 +1208,7 @@ static YPR<Statement> addVarRefToStmt(
 			},
 			_message,
 			_seed,
-			1,
+			YPM::s_highIP,
 			"Make statement arguments variable references"
 		);
 	}
@@ -1225,7 +1225,7 @@ static YPR<Statement> addVarRefToStmtRec(
 			},
 			_message,
 			_seed,
-			1,
+			YPM::s_highIP,
 			"Make statement arguments variable references recursively"
 		);
 	}

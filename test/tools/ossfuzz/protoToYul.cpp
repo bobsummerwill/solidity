@@ -241,7 +241,7 @@ void ProtoConverter::visit(Expression const& _x)
 		// (because there are no variables in scope), we silently output a literal
 		// expression from the optimizer dictionary.
 		if (!varDeclAvailable())
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		else
 			visit(_x.varref());
 		break;
@@ -272,7 +272,7 @@ void ProtoConverter::visit(Expression const& _x)
 		if (_x.func_expr().ret() == FunctionCall::SINGLE)
 			visit(_x.func_expr());
 		else
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		break;
 	case Expression::kLowcall:
 		visit(_x.lowcall());
@@ -284,10 +284,10 @@ void ProtoConverter::visit(Expression const& _x)
 		if (m_isObject)
 			visit(_x.unopdata());
 		else
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		break;
 	case Expression::EXPR_ONEOF_NOT_SET:
-		m_output << dummyExpression();
+		m_output << dictionaryToken();
 		break;
 	}
 }
@@ -299,7 +299,7 @@ void ProtoConverter::visit(BinaryOp const& _x)
 	if ((op == BinaryOp::SHL || op == BinaryOp::SHR || op == BinaryOp::SAR) &&
 		!m_evmVersion.hasBitwiseShifting())
 	{
-		m_output << dummyExpression();
+		m_output << dictionaryToken();
 		return;
 	}
 
@@ -631,7 +631,7 @@ void ProtoConverter::visit(UnaryOp const& _x)
 	// token.
 	if (op == UnaryOp::EXTCODEHASH && !m_evmVersion.hasExtCodeHash())
 	{
-		m_output << dummyExpression();
+		m_output << dictionaryToken();
 		return;
 	}
 
@@ -715,7 +715,7 @@ void ProtoConverter::visit(NullaryOp const& _x)
 		if (m_evmVersion.supportsReturndata())
 			m_output << "returndatasize()";
 		else
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		break;
 	case NullaryOp::ADDRESS:
 		m_output << "address()";
@@ -753,7 +753,7 @@ void ProtoConverter::visit(NullaryOp const& _x)
 		if (m_evmVersion.hasSelfBalance())
 			m_output << "selfbalance()";
 		else
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		break;
 	case NullaryOp::CHAINID:
 		// Replace calls to chainid() on unsupported EVMs with a dictionary
@@ -761,7 +761,7 @@ void ProtoConverter::visit(NullaryOp const& _x)
 		if (m_evmVersion.hasChainID())
 			m_output << "chainid()";
 		else
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		break;
 	}
 }
@@ -980,7 +980,7 @@ void ProtoConverter::visit(FunctionCall const& _x)
 		// If there are no functions available, calls to functions that
 		// return a single value may be replaced by a dictionary token.
 		if (funcType == FunctionCall::SINGLE)
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		return;
 	}
 
@@ -992,7 +992,7 @@ void ProtoConverter::visit(FunctionCall const& _x)
 	if (!functionValid(funcType, numOutParams))
 	{
 		if (funcType == FunctionCall::SINGLE)
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 		return;
 	}
 
@@ -1124,7 +1124,7 @@ void ProtoConverter::visit(Create const& _x)
 	// token.
 	if (type == Create::CREATE2 && !m_evmVersion.hasCreate2())
 	{
-		m_output << dummyExpression();
+		m_output << dictionaryToken();
 		return;
 	}
 
@@ -1736,9 +1736,9 @@ void ProtoConverter::fillFunctionCallInput(unsigned _numInParams)
 			m_output << "sload(" << slot << ")";
 			break;
 		case 3:
-			// Call to dummyExpression() automatically picks a token
+			// Call to dictionaryToken() automatically picks a token
 			// at a pseudo-random location.
-			m_output << dummyExpression();
+			m_output << dictionaryToken();
 			break;
 		}
 		if (i < _numInParams - 1)
