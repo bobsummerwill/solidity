@@ -104,9 +104,18 @@ struct YulProtoMutator
 	/// to a given type.
 	static void addArgs(Statement* _stmt, unsigned _seed, std::function<Expression*(unsigned)>);
 
-	/// Convert all expression-type arguments of statement
-	/// to a given type recursively.
-	static void addArgsRec(Statement* _stmt, unsigned _seed, std::function<void(Expression*, unsigned)>);
+	/// Apply mutator to unset expression-type statement
+	/// arguments.
+	/// @param _stmt: Statement to be mutated
+	/// @param _seed: Pseudo-random unsigned integer
+	/// @param _mutator: Mutator function that accepts an unset expression-type
+	/// statement argument and a pseudo-random integer and applies
+	/// the mutation function to it
+	static void addArgsRec(
+		Statement* _stmt,
+		unsigned _seed,
+		std::function<void(Expression*, unsigned)> _mutator
+	);
 
 	/// Add a new statement to block
 	static void addStmt(Block *_block, unsigned _seed);
@@ -114,7 +123,11 @@ struct YulProtoMutator
 	/// Create binary op expression of two variable references.
 	static Expression* binopExpression(unsigned _seed);
 
-	static void initOrVarRef(Expression* _expr, unsigned _seed);
+	static void unsetExprMutator(
+		Expression* _expr,
+		unsigned _seed,
+		std::function<void(Expression*, unsigned)> _mutateExprFunc
+	);
 
 	/// Check if expression is set.
 	static bool set(Expression const& _expr)

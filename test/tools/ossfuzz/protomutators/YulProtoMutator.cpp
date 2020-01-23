@@ -1214,19 +1214,104 @@ static YPR<Statement> addVarRefToStmt(
 	}
 );
 
-// Add varrefs to statement arguments recursively
+// Add varrefs to unset statement arguments recursively
 static YPR<Statement> addVarRefToStmtRec(
 	[](Statement* _message, unsigned int _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, unsigned int _seed)
 			{
-				YPM::addArgsRec(_message, _seed, YPM::initOrVarRef);
+				YPM::addArgsRec(
+					_message,
+					_seed,
+					[](Expression* _expr, unsigned _seed)
+					{
+						_expr->set_allocated_varref(YPM::varRef(_seed));
+					}
+				);
 			},
 			_message,
 			_seed,
 			YPM::s_highIP,
 			"Make statement arguments variable references recursively"
+		);
+	}
+);
+
+// Add binary operations to unset statement arguments recursively
+static YPR<Statement> addBinopToStmtRec(
+	[](Statement* _message, unsigned int _seed)
+	{
+		YPM::functionWrapper<Statement>(
+			[](Statement* _message, unsigned int _seed)
+			{
+				YPM::addArgsRec(
+					_message,
+					_seed,
+					[](Expression* _expr, unsigned _seed)
+					{
+						auto tmp = YPM::binopExpression(_seed);
+						_expr->CopyFrom(*tmp);
+						delete tmp;
+					}
+				);
+			},
+			_message,
+			_seed,
+			YPM::s_highIP,
+			"Make statement arguments binary ops recursively"
+		);
+	}
+);
+
+// Add load operation to unset statement arguments recursively
+static YPR<Statement> addLoadToStmtRec(
+	[](Statement* _message, unsigned int _seed)
+	{
+		YPM::functionWrapper<Statement>(
+			[](Statement* _message, unsigned int _seed)
+			{
+				YPM::addArgsRec(
+					_message,
+					_seed,
+					[](Expression* _expr, unsigned _seed)
+					{
+						auto tmp = YPM::loadExpression(_seed);
+						_expr->CopyFrom(*tmp);
+						delete tmp;
+					}
+				);
+			},
+			_message,
+			_seed,
+			YPM::s_highIP,
+			"Make statement arguments load expression recursively"
+		);
+	}
+);
+
+// Add load from zero location ops to unset statement arguments recursively
+static YPR<Statement> addLoadFromZeroToStmtRec(
+	[](Statement* _message, unsigned int _seed)
+	{
+		YPM::functionWrapper<Statement>(
+			[](Statement* _message, unsigned int _seed)
+			{
+				YPM::addArgsRec(
+					_message,
+					_seed,
+					[](Expression* _expr, unsigned _seed)
+					{
+						auto tmp = YPM::loadFromZero(_seed);
+						_expr->CopyFrom(*tmp);
+						delete tmp;
+					}
+				);
+			},
+			_message,
+			_seed,
+			YPM::s_highIP,
+			"Make statement arguments loads from location zero recursively"
 		);
 	}
 );
@@ -1413,72 +1498,72 @@ void YPM::addArgs(
 void YPM::addArgsRec(
 	Statement *_stmt,
 	unsigned int _seed,
-	std::function<void(Expression*, unsigned int)> _func
+	std::function<void(Expression*, unsigned)> _mutator
 )
 {
 	switch (_stmt->stmt_oneof_case())
 	{
 	case Statement::kDecl:
-		_func(_stmt->mutable_decl()->mutable_expr(), _seed/13);
+		_mutator(_stmt->mutable_decl()->mutable_expr(), _seed/13);
 		break;
 	case Statement::kAssignment:
 		_stmt->mutable_assignment()->mutable_ref_id()->set_varnum(_seed/19);
-		_func(_stmt->mutable_assignment()->mutable_expr(), _seed/17);
+		_mutator(_stmt->mutable_assignment()->mutable_expr(), _seed/17);
 		break;
 	case Statement::kIfstmt:
-		_func(_stmt->mutable_ifstmt()->mutable_cond(), _seed/23);
+		_mutator(_stmt->mutable_ifstmt()->mutable_cond(), _seed/23);
 		break;
 	case Statement::kStorageFunc:
-		_func(_stmt->mutable_storage_func()->mutable_loc(), _seed/29);
-		_func(_stmt->mutable_storage_func()->mutable_val(), _seed/37);
+		_mutator(_stmt->mutable_storage_func()->mutable_loc(), _seed/29);
+		_mutator(_stmt->mutable_storage_func()->mutable_val(), _seed/37);
 		break;
 	case Statement::kBlockstmt:
 		break;
 	case Statement::kForstmt:
-		_func(_stmt->mutable_forstmt()->mutable_for_cond(), _seed/41);
+		_mutator(_stmt->mutable_forstmt()->mutable_for_cond(), _seed/41);
 		break;
 	case Statement::kBoundedforstmt:
 		break;
 	case Statement::kSwitchstmt:
-		_func(_stmt->mutable_switchstmt()->mutable_switch_expr(), _seed/43);
+		_mutator(_stmt->mutable_switchstmt()->mutable_switch_expr(), _seed/43);
 		break;
 	case Statement::kBreakstmt:
 		break;
 	case Statement::kContstmt:
 		break;
 	case Statement::kLogFunc:
-		_func(_stmt->mutable_log_func()->mutable_pos(), _seed/19);
-		_func(_stmt->mutable_log_func()->mutable_size(), _seed/17);
-		_func(_stmt->mutable_log_func()->mutable_t1(), _seed/7);
-		_func(_stmt->mutable_log_func()->mutable_t2(), _seed/5);
-		_func(_stmt->mutable_log_func()->mutable_t3(), _seed/3);
-		_func(_stmt->mutable_log_func()->mutable_t4(), _seed);
+		_mutator(_stmt->mutable_log_func()->mutable_pos(), _seed/19);
+		_mutator(_stmt->mutable_log_func()->mutable_size(), _seed/17);
+		_mutator(_stmt->mutable_log_func()->mutable_t1(), _seed/7);
+		_mutator(_stmt->mutable_log_func()->mutable_t2(), _seed/5);
+		_mutator(_stmt->mutable_log_func()->mutable_t3(), _seed/3);
+		_mutator(_stmt->mutable_log_func()->mutable_t4(), _seed);
 		break;
 	case Statement::kCopyFunc:
-		_func(_stmt->mutable_copy_func()->mutable_target(), _seed/17);
-		_func(_stmt->mutable_copy_func()->mutable_source(), _seed/13);
-		_func(_stmt->mutable_copy_func()->mutable_size(), _seed/11);
+		_mutator(_stmt->mutable_copy_func()->mutable_target(), _seed/17);
+		_mutator(_stmt->mutable_copy_func()->mutable_source(), _seed/13);
+		_mutator(_stmt->mutable_copy_func()->mutable_size(), _seed/11);
 		break;
 	case Statement::kExtcodeCopy:
-		_func(_stmt->mutable_extcode_copy()->mutable_addr(), _seed/19);
-		_func(_stmt->mutable_extcode_copy()->mutable_target(), _seed/17);
-		_func(_stmt->mutable_extcode_copy()->mutable_source(), _seed/13);
-		_func(_stmt->mutable_extcode_copy()->mutable_size(), _seed/11);
+		_mutator(_stmt->mutable_extcode_copy()->mutable_addr(), _seed/19);
+		_mutator(_stmt->mutable_extcode_copy()->mutable_target(), _seed/17);
+		_mutator(_stmt->mutable_extcode_copy()->mutable_source(), _seed/13);
+		_mutator(_stmt->mutable_extcode_copy()->mutable_size(), _seed/11);
 		break;
 	case Statement::kTerminatestmt:
 		if (_stmt->terminatestmt().term_oneof_case() == TerminatingStmt::kRetRev)
 		{
-			_func(_stmt->mutable_terminatestmt()->mutable_ret_rev()->mutable_pos(), _seed/11);
-			_func(_stmt->mutable_terminatestmt()->mutable_ret_rev()->mutable_size(), _seed/13);
+			_mutator(_stmt->mutable_terminatestmt()->mutable_ret_rev()->mutable_pos(), _seed/11);
+			_mutator(_stmt->mutable_terminatestmt()->mutable_ret_rev()->mutable_size(), _seed/13);
 		}
 		else if (_stmt->terminatestmt().term_oneof_case() == TerminatingStmt::kSelfDes)
-			_func(_stmt->mutable_terminatestmt()->mutable_self_des()->mutable_addr(), _seed/17);
+			_mutator(_stmt->mutable_terminatestmt()->mutable_self_des()->mutable_addr(), _seed/17);
 		break;
 	case Statement::kFunctioncall:
-		_func(_stmt->mutable_functioncall()->mutable_in_param1(), _seed/11);
-		_func(_stmt->mutable_functioncall()->mutable_in_param2(), _seed/13);
-		_func(_stmt->mutable_functioncall()->mutable_in_param3(), _seed/17);
-		_func(_stmt->mutable_functioncall()->mutable_in_param4(), _seed/19);
+		_mutator(_stmt->mutable_functioncall()->mutable_in_param1(), _seed/11);
+		_mutator(_stmt->mutable_functioncall()->mutable_in_param2(), _seed/13);
+		_mutator(_stmt->mutable_functioncall()->mutable_in_param3(), _seed/17);
+		_mutator(_stmt->mutable_functioncall()->mutable_in_param4(), _seed/19);
 		if (_stmt->functioncall().ret() == FunctionCall_Returns::FunctionCall_Returns_MULTIASSIGN)
 		{
 			_stmt->mutable_functioncall()->set_allocated_out_param1(varRef(_seed/23));
@@ -1490,7 +1575,7 @@ void YPM::addArgsRec(
 	case Statement::kFuncdef:
 		break;
 	case Statement::kPop:
-		_func(_stmt->mutable_pop()->mutable_expr(), _seed/11);
+		_mutator(_stmt->mutable_pop()->mutable_expr(), _seed/11);
 		break;
 	case Statement::kLeave:
 		break;
@@ -1835,7 +1920,11 @@ Expression* YPM::binopExpression(unsigned _seed)
 	return expr;
 }
 
-void YPM::initOrVarRef(Expression* _expr, unsigned _seed)
+void YPM::unsetExprMutator(
+	Expression* _expr,
+	unsigned _seed,
+	std::function<void(Expression*, unsigned)> _mutateExprFunc
+)
 {
 	switch (_expr->expr_oneof_case())
 	{
@@ -1849,36 +1938,36 @@ void YPM::initOrVarRef(Expression* _expr, unsigned _seed)
 		break;
 	case Expression::kBinop:
 		if (!set(_expr->binop().left()))
-			_expr->mutable_binop()->mutable_left()->set_allocated_varref(varRef(_seed));
+			_mutateExprFunc(_expr->mutable_binop()->mutable_left(), _seed);
 		else
-			initOrVarRef(_expr->mutable_binop()->mutable_left(), _seed/11);
+			unsetExprMutator(_expr->mutable_binop()->mutable_left(), _seed / 11, _mutateExprFunc);
 
 		if (!set(_expr->binop().right()))
-			_expr->mutable_binop()->mutable_right()->set_allocated_varref(varRef(_seed/17));
+			_mutateExprFunc(_expr->mutable_binop()->mutable_right(), _seed/17);
 		else
-			initOrVarRef(_expr->mutable_binop()->mutable_right(), _seed/17);
+			unsetExprMutator(_expr->mutable_binop()->mutable_right(), _seed / 17, _mutateExprFunc);
 		break;
 	case Expression::kUnop:
 		if (!set(_expr->unop().operand()))
-			_expr->mutable_unop()->mutable_operand()->set_allocated_varref(varRef(_seed));
+			_mutateExprFunc(_expr->mutable_unop()->mutable_operand(), _seed/23);
 		else
-			initOrVarRef(_expr->mutable_unop()->mutable_operand(), _seed/23);
+			unsetExprMutator(_expr->mutable_unop()->mutable_operand(), _seed / 23, _mutateExprFunc);
 		break;
 	case Expression::kTop:
 		if (!set(_expr->top().arg1()))
-			_expr->mutable_top()->mutable_arg1()->set_allocated_varref(varRef(_seed));
+			_mutateExprFunc(_expr->mutable_top()->mutable_arg1(), _seed/29);
 		else
-			initOrVarRef(_expr->mutable_top()->mutable_arg1(), _seed/29);
+			unsetExprMutator(_expr->mutable_top()->mutable_arg1(), _seed / 29, _mutateExprFunc);
 
 		if (!set(_expr->top().arg2()))
-			_expr->mutable_top()->mutable_arg2()->set_allocated_varref(varRef(_seed/17));
+			_mutateExprFunc(_expr->mutable_top()->mutable_arg2(), _seed/31);
 		else
-			initOrVarRef(_expr->mutable_top()->mutable_arg2(), _seed/31);
+			unsetExprMutator(_expr->mutable_top()->mutable_arg2(), _seed / 31, _mutateExprFunc);
 
 		if (!set(_expr->top().arg3()))
-			_expr->mutable_top()->mutable_arg3()->set_allocated_varref(varRef(_seed));
+			_mutateExprFunc(_expr->mutable_top()->mutable_arg3(), _seed/37);
 		else
-			initOrVarRef(_expr->mutable_top()->mutable_arg3(), _seed/37);
+			unsetExprMutator(_expr->mutable_top()->mutable_arg3(), _seed / 37, _mutateExprFunc);
 		break;
 	case Expression::kNop:
 		break;
@@ -1886,24 +1975,28 @@ void YPM::initOrVarRef(Expression* _expr, unsigned _seed)
 		_expr->mutable_func_expr()->set_ret(FunctionCall_Returns::FunctionCall_Returns_SINGLE);
 
 		if (!set(_expr->func_expr().in_param1()))
-			_expr->mutable_func_expr()->mutable_in_param1()->set_allocated_varref(varRef(_seed));
+			_mutateExprFunc(_expr->mutable_func_expr()->mutable_in_param1(), _seed/41);
 		else
-			initOrVarRef(_expr->mutable_func_expr()->mutable_in_param1(), _seed/41);
+			unsetExprMutator(_expr->mutable_func_expr()->mutable_in_param1(), _seed / 41,
+			                 _mutateExprFunc);
 
 		if (!set(_expr->func_expr().in_param2()))
-			_expr->mutable_func_expr()->mutable_in_param2()->set_allocated_varref(varRef(_seed/7));
+			_mutateExprFunc(_expr->mutable_func_expr()->mutable_in_param2(), _seed/43);
 		else
-			initOrVarRef(_expr->mutable_func_expr()->mutable_in_param2(), _seed/43);
+			unsetExprMutator(_expr->mutable_func_expr()->mutable_in_param2(), _seed / 43,
+			                 _mutateExprFunc);
 
 		if (!set(_expr->func_expr().in_param3()))
-			_expr->mutable_func_expr()->mutable_in_param3()->set_allocated_varref(varRef(_seed/11));
+			_mutateExprFunc(_expr->mutable_func_expr()->mutable_in_param3(), _seed/47);
 		else
-			initOrVarRef(_expr->mutable_func_expr()->mutable_in_param3(), _seed/47);
+			unsetExprMutator(_expr->mutable_func_expr()->mutable_in_param3(), _seed / 47,
+			                 _mutateExprFunc);
 
 		if (!set(_expr->func_expr().in_param4()))
-			_expr->mutable_func_expr()->mutable_in_param4()->set_allocated_varref(varRef(_seed));
+			_mutateExprFunc(_expr->mutable_func_expr()->mutable_in_param4(), _seed/53);
 		else
-			initOrVarRef(_expr->mutable_func_expr()->mutable_in_param4(), _seed/53);
+			unsetExprMutator(_expr->mutable_func_expr()->mutable_in_param4(), _seed / 53,
+			                 _mutateExprFunc);
 
 		break;
 	case Expression::kLowcall:
@@ -1911,73 +2004,78 @@ void YPM::initOrVarRef(Expression* _expr, unsigned _seed)
 		if (_expr->lowcall().callty() == LowLevelCall::CALLCODE || _expr->lowcall().callty() == LowLevelCall::CALL)
 		{
 			if (!set(_expr->lowcall().wei()))
-				_expr->mutable_lowcall()->mutable_wei()->set_allocated_varref(varRef(_seed));
+				_mutateExprFunc(_expr->mutable_lowcall()->mutable_wei(), _seed/19);
 			else
-				initOrVarRef(_expr->mutable_lowcall()->mutable_wei(), _seed/19);
+				unsetExprMutator(_expr->mutable_lowcall()->mutable_wei(), _seed / 19,
+				                 _mutateExprFunc);
 		}
 
 		// Gas
 		if (!set(_expr->lowcall().gas()))
-			_expr->mutable_lowcall()->mutable_gas()->set_allocated_varref(varRef(_seed/7));
+			_mutateExprFunc(_expr->mutable_lowcall()->mutable_gas(), _seed/101);
 		else
-			initOrVarRef(_expr->mutable_lowcall()->mutable_gas(), _seed/101);
+			unsetExprMutator(_expr->mutable_lowcall()->mutable_gas(), _seed / 101, _mutateExprFunc);
 
 		// Addr
 		if (!set(_expr->lowcall().addr()))
-			_expr->mutable_lowcall()->mutable_addr()->set_allocated_varref(varRef(_seed/5));
+			_mutateExprFunc(_expr->mutable_lowcall()->mutable_addr(), _seed/103);
 		else
-			initOrVarRef(_expr->mutable_lowcall()->mutable_addr(), _seed/103);
+			unsetExprMutator(_expr->mutable_lowcall()->mutable_addr(), _seed / 103, _mutateExprFunc);
 
 		// In
 		if (!set(_expr->lowcall().in()))
-			_expr->mutable_lowcall()->mutable_in()->set_allocated_varref(varRef(_seed/3));
+			_mutateExprFunc(_expr->mutable_lowcall()->mutable_in(), _seed/39);
 		else
-			initOrVarRef(_expr->mutable_lowcall()->mutable_in(), _seed/39);
+			unsetExprMutator(_expr->mutable_lowcall()->mutable_in(), _seed / 39, _mutateExprFunc);
 		// Insize
 		if (!set(_expr->lowcall().insize()))
-			_expr->mutable_lowcall()->mutable_insize()->set_allocated_varref(varRef(_seed/11));
+			_mutateExprFunc(_expr->mutable_lowcall()->mutable_insize(), _seed/41);
 		else
-			initOrVarRef(_expr->mutable_lowcall()->mutable_insize(), _seed);
+			unsetExprMutator(_expr->mutable_lowcall()->mutable_insize(), _seed / 41,
+			                 _mutateExprFunc);
 		// Out
 		if (!set(_expr->lowcall().out()))
-			_expr->mutable_lowcall()->mutable_out()->set_allocated_varref(varRef(_seed/13));
+			_mutateExprFunc(_expr->mutable_lowcall()->mutable_out(), _seed/13);
 		else
-			initOrVarRef(_expr->mutable_lowcall()->mutable_out(), _seed);
+			unsetExprMutator(_expr->mutable_lowcall()->mutable_out(), _seed / 13, _mutateExprFunc);
 		// Outsize
 		if (!set(_expr->lowcall().outsize()))
-			_expr->mutable_lowcall()->mutable_outsize()->set_allocated_varref(varRef(_seed/17));
+			_mutateExprFunc(_expr->mutable_lowcall()->mutable_outsize(), _seed/17);
 		else
-			initOrVarRef(_expr->mutable_lowcall()->mutable_outsize(), _seed);
+			unsetExprMutator(_expr->mutable_lowcall()->mutable_outsize(), _seed / 17,
+			                 _mutateExprFunc);
 		break;
 	case Expression::kCreate:
 		// Value
 		if (_expr->create().createty() == Create_Type::Create_Type_CREATE2)
 		{
 			if (!set(_expr->create().value()))
-				_expr->mutable_create()->mutable_value()->set_allocated_varref(varRef(_seed/5));
+				_mutateExprFunc(_expr->mutable_create()->mutable_value(), _seed/19);
 			else
-				initOrVarRef(_expr->mutable_create()->mutable_value(), _seed);
+				unsetExprMutator(_expr->mutable_create()->mutable_value(), _seed / 19,
+				                 _mutateExprFunc);
 		}
 		// Wei
 		if (!set(_expr->create().wei()))
-			_expr->mutable_create()->mutable_wei()->set_allocated_varref(varRef(_seed/7));
+			_mutateExprFunc(_expr->mutable_create()->mutable_wei(), _seed/21);
 		else
-			initOrVarRef(_expr->mutable_create()->mutable_wei(), _seed);
+			unsetExprMutator(_expr->mutable_create()->mutable_wei(), _seed / 21, _mutateExprFunc);
 		// Position
 		if (!set(_expr->create().position()))
-			_expr->mutable_create()->mutable_position()->set_allocated_varref(varRef(_seed/11));
+			_mutateExprFunc(_expr->mutable_create()->mutable_position(), _seed/23);
 		else
-			initOrVarRef(_expr->mutable_create()->mutable_position(), _seed);
+			unsetExprMutator(_expr->mutable_create()->mutable_position(), _seed / 23,
+			                 _mutateExprFunc);
 		// Size
 		if (!set(_expr->create().size()))
-			_expr->mutable_create()->mutable_size()->set_allocated_varref(varRef(_seed/13));
+			_mutateExprFunc(_expr->mutable_create()->mutable_size(), _seed/29);
 		else
-			initOrVarRef(_expr->mutable_create()->mutable_size(), _seed);
+			unsetExprMutator(_expr->mutable_create()->mutable_size(), _seed / 29, _mutateExprFunc);
 		break;
 	case Expression::kUnopdata:
 		break;
 	case Expression::EXPR_ONEOF_NOT_SET:
-		_expr->set_allocated_varref(varRef(_seed/17));
+		_mutateExprFunc(_expr, _seed/31);
 		break;
 	}
 }
