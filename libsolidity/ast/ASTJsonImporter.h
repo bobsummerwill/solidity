@@ -118,6 +118,7 @@ private:
 	ASTPointer<Identifier> createIdentifier(Json::Value const& _node);
 	ASTPointer<ElementaryTypeNameExpression> createElementaryTypeNameExpression(Json::Value const& _node);
 	ASTPointer<ASTNode> createLiteral(Json::Value const& _node);
+	ASTPointer<NatspecDocumentation> createDocumentation(Json::Value const& _node);
 	///@}
 
 	// =============== general helper functions ===================

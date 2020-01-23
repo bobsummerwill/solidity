@@ -206,6 +206,8 @@ ASTPointer<ASTNode> ASTJsonImporter::convertJsonToASTNode(Json::Value const& _js
 		return createElementaryTypeNameExpression(_json);
 	if (nodeType == "Literal")
 		return createLiteral(_json);
+	if (nodeType == "Documentation")
+		return createDocumentation(_json);
 	else
 		astAssert(false, "Unknown type of ASTNode: " + nodeType);
 }
@@ -281,7 +283,7 @@ ASTPointer<ContractDefinition> ASTJsonImporter::createContractDefinition(Json::V
 	return createASTNode<ContractDefinition>(
 		_node,
 		make_shared<ASTString>(_node["name"].asString()),
-		nullOrASTString(_node, "documentation"),
+		createDocumentation(member(_node, "documentation")),
 		baseContracts,
 		subNodes,
 		contractKind(_node),
@@ -395,7 +397,7 @@ ASTPointer<FunctionDefinition> ASTJsonImporter::createFunctionDefinition(Json::V
 		kind,
 		memberAsBool(_node, "virtual"),
 		_node["overrides"].isNull() ? nullptr : createOverrideSpecifier(member(_node, "overrides")),
-		nullOrASTString(_node, "documentation"),
+		createDocumentation(member(_node, "documentation")),
 		createParameterList(member(_node, "parameters")),
 		modifiers,
 		createParameterList(member(_node, "returnParameters")),
@@ -426,7 +428,7 @@ ASTPointer<ModifierDefinition> ASTJsonImporter::createModifierDefinition(Json::V
 	return createASTNode<ModifierDefinition>(
 		_node,
 		memberAsASTString(_node, "name"),
-		nullOrASTString(_node,"documentation"),
+		createDocumentation(member(_node, "documentation")),
 		createParameterList(member(_node, "parameters")),
 		memberAsBool(_node, "virtual"),
 		_node["overrides"].isNull() ? nullptr : createOverrideSpecifier(member(_node, "overrides")),
@@ -451,7 +453,7 @@ ASTPointer<EventDefinition> ASTJsonImporter::createEventDefinition(Json::Value c
 	return createASTNode<EventDefinition>(
 		_node,
 		memberAsASTString(_node, "name"),
-		nullOrASTString(_node, "documentation"),
+		createDocumentation(member(_node, "documentation")),
 		createParameterList(member(_node, "parameters")),
 		memberAsBool(_node, "anonymous")
 	);
@@ -817,6 +819,20 @@ ASTPointer<ASTNode> ASTJsonImporter::createLiteral(Json::Value const&  _node)
 		literalTokenKind(_node),
 		value,
 		member(_node, "subdenomination").isNull() ? Literal::SubDenomination::None : subdenomination(_node)
+	);
+}
+
+ASTPointer<NatspecDocumentation> ASTJsonImporter::createDocumentation(Json::Value const&  _node)
+{
+	static string const textString = "text";
+
+	astAssert(member(_node, textString).isString(), "'text' must be a string");
+
+	ASTPointer<ASTString> text = make_shared<ASTString>(_node[textString].asString());
+
+	return createASTNode<NatspecDocumentation>(
+		_node,
+		text
 	);
 }
 

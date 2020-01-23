@@ -2,12 +2,12 @@
   "absolutePath": "a",
   "exportedSymbols":
   {
-    "C":
+    "A":
     [
-      1
+      2
     ]
   },
-  "id": 2,
+  "id": 3,
   "nodeType": "SourceUnit",
   "nodes":
   [
@@ -16,17 +16,23 @@
       "baseContracts": [],
       "contractDependencies": [],
       "contractKind": "contract",
-      "documentation": "This contract is empty",
+      "documentation":
+      {
+        "id": 1,
+        "nodeType": "Natspec",
+        "src": "28:8:1",
+        "text": "This contract is empty"
+      },
       "fullyImplemented": true,
-      "id": 1,
+      "id": 2,
       "linearizedBaseContracts":
       [
-        1
+        2
       ],
-      "name": "C",
+      "name": "A",
       "nodeType": "ContractDefinition",
       "nodes": [],
-      "scope": 2,
+      "scope": 3,
       "src": "28:13:1"
     }
   ],
@@ -36,12 +42,12 @@
   "absolutePath": "b",
   "exportedSymbols":
   {
-    "C":
+    "B":
     [
-      3
+      5
     ]
   },
-  "id": 4,
+  "id": 6,
   "nodeType": "SourceUnit",
   "nodes":
   [
@@ -50,17 +56,23 @@
       "baseContracts": [],
       "contractDependencies": [],
       "contractKind": "contract",
-      "documentation": "This contract is empty\nand has a line-breaking comment.",
+      "documentation":
+      {
+        "id": 4,
+        "nodeType": "Natspec",
+        "src": "62:8:2",
+        "text": "This contract is empty\nand has a line-breaking comment."
+      },
       "fullyImplemented": true,
-      "id": 3,
+      "id": 5,
       "linearizedBaseContracts":
       [
-        3
+        5
       ],
-      "name": "C",
+      "name": "B",
       "nodeType": "ContractDefinition",
       "nodes": [],
-      "scope": 4,
+      "scope": 6,
       "src": "62:13:2"
     }
   ],
@@ -72,10 +84,10 @@
   {
     "C":
     [
-      15
+      20
     ]
   },
-  "id": 16,
+  "id": 21,
   "nodeType": "SourceUnit",
   "nodes":
   [
@@ -86,10 +98,10 @@
       "contractKind": "contract",
       "documentation": null,
       "fullyImplemented": true,
-      "id": 15,
+      "id": 20,
       "linearizedBaseContracts":
       [
-        15
+        20
       ],
       "name": "C",
       "nodeType": "ContractDefinition",
@@ -98,60 +110,60 @@
         {
           "anonymous": false,
           "documentation": "Some comment on Evt.",
-          "id": 6,
+          "id": 9,
           "name": "Evt",
           "nodeType": "EventDefinition",
           "parameters":
           {
-            "id": 5,
+            "id": 8,
             "nodeType": "ParameterList",
             "parameters": [],
-            "src": "51:2:3"
+            "src": "53:2:3"
           },
-          "src": "42:12:3"
-        },
-        {
-          "body":
-          {
-            "id": 9,
-            "nodeType": "Block",
-            "src": "99:6:3",
-            "statements":
-            [
-              {
-                "id": 8,
-                "nodeType": "PlaceholderStatement",
-                "src": "101:1:3"
-              }
-            ]
-          },
-          "documentation": "Some comment on mod.",
-          "id": 10,
-          "name": "mod",
-          "nodeType": "ModifierDefinition",
-          "overrides": null,
-          "parameters":
-          {
-            "id": 7,
-            "nodeType": "ParameterList",
-            "parameters": [],
-            "src": "96:2:3"
-          },
-          "src": "84:21:3",
-          "virtual": false,
-          "visibility": "internal"
+          "src": "44:12:3"
         },
         {
           "body":
           {
             "id": 13,
             "nodeType": "Block",
-            "src": "155:2:3",
+            "src": "103:6:3",
+            "statements":
+            [
+              {
+                "id": 12,
+                "nodeType": "PlaceholderStatement",
+                "src": "105:1:3"
+              }
+            ]
+          },
+          "documentation": "Some comment on mod.",
+          "id": 14,
+          "name": "mod",
+          "nodeType": "ModifierDefinition",
+          "overrides": null,
+          "parameters":
+          {
+            "id": 11,
+            "nodeType": "ParameterList",
+            "parameters": [],
+            "src": "100:2:3"
+          },
+          "src": "88:21:3",
+          "virtual": false,
+          "visibility": "internal"
+        },
+        {
+          "body":
+          {
+            "id": 18,
+            "nodeType": "Block",
+            "src": "161:2:3",
             "statements": []
           },
           "documentation": "Some comment on fn.",
           "functionSelector": "a4a2c40b",
-          "id": 14,
+          "id": 19,
           "implemented": true,
           "kind": "function",
           "modifiers": [],
@@ -160,28 +172,28 @@
           "overrides": null,
           "parameters":
           {
-            "id": 11,
+            "id": 16,
             "nodeType": "ParameterList",
             "parameters": [],
-            "src": "145:2:3"
+            "src": "151:2:3"
           },
           "returnParameters":
           {
-            "id": 12,
+            "id": 17,
             "nodeType": "ParameterList",
             "parameters": [],
-            "src": "155:0:3"
+            "src": "161:0:3"
           },
-          "scope": 15,
-          "src": "134:23:3",
+          "scope": 20,
+          "src": "140:23:3",
           "stateMutability": "nonpayable",
           "virtual": false,
           "visibility": "public"
         }
       ],
-      "scope": 16,
-      "src": "0:159:3"
+      "scope": 21,
+      "src": "0:165:3"
     }
   ],
-  "src": "0:160:3"
+  "src": "0:166:3"
 }
