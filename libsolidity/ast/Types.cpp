@@ -3315,13 +3315,13 @@ Type const* FunctionType::selfType() const
 	return m_parameterTypes.at(0);
 }
 
-ASTPointer<ASTString> FunctionType::documentation() const
+ASTPointer<NatspecDocumentation> FunctionType::documentation() const
 {
-	auto function = dynamic_cast<Documented const*>(m_declaration);
+	auto function = dynamic_cast<NatspecDocumented const*>(m_declaration);
 	if (function)
 		return function->documentation();
 
-	return ASTPointer<ASTString>();
+	return ASTPointer<NatspecDocumentation>();
 }
 
 bool FunctionType::padArguments() const

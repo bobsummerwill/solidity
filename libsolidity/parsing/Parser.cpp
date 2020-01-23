@@ -135,6 +135,17 @@ void Parser::parsePragmaVersion(SourceLocation const& _location, vector<Token> c
 			);
 }
 
+ASTPointer<NatspecDocumentation> Parser::parseNatspecDocumentation()
+{
+	ASTNodeFactory nodeFactory(*this);
+	// TODO The line below leads to an ICE because the source is null
+	// at that location.
+	// nodeFactory.setLocation(m_scanner->currentCommentLocation());
+	return nodeFactory.createNode<NatspecDocumentation>(
+		make_shared<ASTString>(m_scanner->currentCommentLiteral())
+	);
+}
+
 ASTPointer<PragmaDirective> Parser::parsePragmaDirective()
 {
 	RecursionGuard recursionGuard(*this);
@@ -276,14 +287,14 @@ ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
 	ASTPointer<ASTString> name =  nullptr;
-	ASTPointer<ASTString> docString;
+	ASTPointer<NatspecDocumentation> docString;
 	vector<ASTPointer<InheritanceSpecifier>> baseContracts;
 	vector<ASTPointer<ASTNode>> subNodes;
 	std::pair<ContractKind, bool> contractKind{};
 	try
 	{
 		if (m_scanner->currentCommentLiteral() != "")
-			docString = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+			docString = parseNatspecDocumentation();
 		contractKind = parseContractKind();
 		name = expectIdentifierToken();
 		if (m_scanner->currentToken() == Token::Is)
@@ -538,9 +549,9 @@ ASTPointer<ASTNode> Parser::parseFunctionDefinition()
 {
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
-	ASTPointer<ASTString> docstring;
+	ASTPointer<NatspecDocumentation> docstring;
 	if (m_scanner->currentCommentLiteral() != "")
-		docstring = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+		docstring = parseNatspecDocumentation();
 
 	Token kind = m_scanner->currentToken();
 	ASTPointer<ASTString> name;
@@ -792,9 +803,9 @@ ASTPointer<ModifierDefinition> Parser::parseModifierDefinition()
 	m_insideModifier = true;
 
 	ASTNodeFactory nodeFactory(*this);
-	ASTPointer<ASTString> docstring;
+	ASTPointer<NatspecDocumentation> docstring;
 	if (m_scanner->currentCommentLiteral() != "")
-		docstring = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+		docstring = parseNatspecDocumentation();
 
 	expectToken(Token::Modifier);
 	ASTPointer<ASTString> name(expectIdentifierToken());
@@ -842,9 +853,9 @@ ASTPointer<EventDefinition> Parser::parseEventDefinition()
 {
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
-	ASTPointer<ASTString> docstring;
+	ASTPointer<NatspecDocumentation> docstring;
 	if (m_scanner->currentCommentLiteral() != "")
-		docstring = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+		docstring = parseNatspecDocumentation();
 
 	expectToken(Token::Event);
 	ASTPointer<ASTString> name(expectIdentifierToken());
@@ -1355,7 +1366,7 @@ ASTPointer<EmitStatement> Parser::parseEmitStatement(ASTPointer<ASTString> const
 		if (m_scanner->currentToken() != Token::Period)
 			break;
 		m_scanner->next();
-	};
+	}
 
 	auto eventName = expressionFromIndexAccessStructure(iap);
 	expectToken(Token::LParen);
