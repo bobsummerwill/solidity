@@ -56,24 +56,25 @@ private:
 
 	void handleConstructor(
 		CallableDeclaration const& _callable,
-		Documented const& _node,
+		NatspecDocumented const& _node,
 		DocumentedAnnotation& _annotation
 	);
 
 	void handleCallable(
 		CallableDeclaration const& _callable,
-		Documented const& _node,
+		NatspecDocumented const& _node,
 		DocumentedAnnotation& _annotation
 	);
 
 	void parseDocStrings(
-		Documented const& _node,
+		NatspecDocumented const& _node,
 		DocumentedAnnotation& _annotation,
 		std::set<std::string> const& _validTags,
 		std::string const& _nodeName
 	);
 
 	void appendError(std::string const& _description);
+	void appendError(langutil::SourceLocation const& _location, std::string const& _description);
 
 	bool m_errorOccured = false;
 	langutil::ErrorReporter& m_errorReporter;
