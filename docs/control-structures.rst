@@ -228,8 +228,9 @@ the given salt value, the (creation) bytecode of the created contract and the co
 arguments.
 
 In particular, the counter ("nonce") is not used. This allows for more flexibility
-in creating contracts and in particular, you are able to deriven the address of the
-new contract before it is created and rely on this address also in case the creating
+in creating contracts: You are able to derive the address of the
+new contract before it is created. Furthermore, you can rely on this address
+also in case the creating
 contracts creates other contracts in the meantime.
 
 The main use-case here is contracts that act as judges for off-chain interactions,
