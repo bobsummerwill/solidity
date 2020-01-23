@@ -236,6 +236,7 @@ contracts creates other contracts in the meantime.
 The main use-case here is contracts that act as judges for off-chain interactions,
 which only need to be created if there is a dispute.
 
+::
 
     pragma solidity >0.6.1 <0.7.0;
 
