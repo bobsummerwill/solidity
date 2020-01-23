@@ -12,10 +12,10 @@ contract C {
 // ====
 // EVMVersion: >=constantinople
 // ----
-// TypeError: (78-110): Duplicate option "gas".
-// TypeError: (120-154): Duplicate option "gas".
-// TypeError: (164-198): Duplicate option "value".
-// TypeError: (208-242): Duplicate option "value".
-// TypeError: (252-293): Duplicate option "value".
-// TypeError: (252-293): Duplicate option "gas".
-// TypeError: (303-330): Duplicate option "salt".
+// TypeError: (78-110): Option "gas" has already been set.
+// TypeError: (120-154): Option "gas" has already been set.
+// TypeError: (164-198): Option "value" has already been set.
+// TypeError: (208-242): Option "value" has already been set.
+// TypeError: (252-293): Option "gas" has already been set.
+// TypeError: (252-293): Option "value" has already been set.
+// TypeError: (303-330): Option "salt" has already been set.

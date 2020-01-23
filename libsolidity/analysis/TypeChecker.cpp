@@ -2237,9 +2237,9 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		return false;
 	}
 
-	bool setSalt = expressionFunctionType->saltSet();
-	bool setValue = expressionFunctionType->valueSet();
-	bool setGas = expressionFunctionType->gasSet();
+	bool setSalt = false; expressionFunctionType->saltSet();
+	bool setValue = false; expressionFunctionType->valueSet();
+	bool setGas = false ;expressionFunctionType->gasSet();
 
 	FunctionType::Kind kind = expressionFunctionType->kind();
 	if (
@@ -2258,11 +2258,13 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		return false;
 	}
 
-	auto setCheckOption = [&](bool& _option, string const&& _name)
+	auto setCheckOption = [&](bool& _option, string const&& _name, bool _alreadySet = false)
 	{
 		if (_option)
 			m_errorReporter.typeError(
 				_functionCallOptions.location(),
+				_alreadySet ?
+				"Option \"" + std::move(_name) + "\" has already been set." :
 				"Duplicate option \"" + std::move(_name) + "\"."
 			);
 
@@ -2330,10 +2332,17 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 			);
 	}
 
+	if (expressionFunctionType->gasSet())
+		setCheckOption(setGas, "gas", true);
+	if (expressionFunctionType->valueSet())
+		setCheckOption(setValue, "value", true);
+	if (expressionFunctionType->saltSet())
+		setCheckOption(setSalt, "salt", true);
+
 	if (setSalt && !m_evmVersion.hasCreate2())
 		m_errorReporter.typeError(
 			_functionCallOptions.location(),
-			"Unsupported call option \"salt\" (requires \"constantinople\" or newer)."
+			"Unsupported call option \"salt\" (requires Constantinople-compatible VMs)."
 		);
 
 	_functionCallOptions.annotation().type = expressionFunctionType->copyAndSetCallOptions(setGas, setValue, setSalt);
