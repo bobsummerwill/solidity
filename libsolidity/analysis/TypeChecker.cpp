@@ -2226,10 +2226,6 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 
 bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 {
-	bool setSalt = false;
-	bool setValue = false;
-	bool setGas = false;
-
 	solAssert(_functionCallOptions.options().size() == _functionCallOptions.names().size(), "Lengths of name & value arrays differ!");
 
 	_functionCallOptions.expression().accept(*this);
@@ -2241,11 +2237,9 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		return false;
 	}
 
-	if (dynamic_cast<FunctionCallOptions const*>(&_functionCallOptions.expression()))
-		m_errorReporter.typeError(
-			_functionCallOptions.expression().location(),
-			"Function call options already specified."
-		);
+	bool setSalt = expressionFunctionType->saltSet();
+	bool setValue = expressionFunctionType->valueSet();
+	bool setGas = expressionFunctionType->gasSet();
 
 	FunctionType::Kind kind = expressionFunctionType->kind();
 	if (
@@ -2264,6 +2258,17 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		return false;
 	}
 
+	auto setCheckOption = [&](bool& _option, string const&& _name)
+	{
+		if (_option)
+			m_errorReporter.typeError(
+				_functionCallOptions.location(),
+				"Duplicate option \"" + std::move(_name) + "\"."
+			);
+
+		_option = true;
+	};
+
 	for (size_t i = 0; i < _functionCallOptions.names().size(); ++i)
 	{
 		string const& name = *(_functionCallOptions.names()[i]);
@@ -2271,13 +2276,7 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		{
 			if (kind == FunctionType::Kind::Creation)
 			{
-				if (setSalt)
-					m_errorReporter.typeError(
-						_functionCallOptions.location(),
-						"Duplicate option \"salt\"."
-					);
-
-				setSalt = true;
+				setCheckOption(setSalt, "salt");
 				expectType(*_functionCallOptions.options()[i], *TypeProvider::fixedBytes(32));
 			}
 			else
@@ -2307,13 +2306,7 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 			{
 				expectType(*_functionCallOptions.options()[i], *TypeProvider::uint256());
 
-				if (setValue)
-					m_errorReporter.typeError(
-						_functionCallOptions.location(),
-						"Duplicate option \"value\"."
-					);
-
-				setValue = true;
+				setCheckOption(setValue, "value");
 			}
 		}
 		else if (name == "gas")
@@ -2327,13 +2320,7 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 			{
 				expectType(*_functionCallOptions.options()[i], *TypeProvider::uint256());
 
-				if (setGas)
-					m_errorReporter.typeError(
-						_functionCallOptions.location(),
-						"Duplicate option \"gas\"."
-					);
-
-				setGas = true;
+				setCheckOption(setGas, "gas");
 			}
 		}
 		else
