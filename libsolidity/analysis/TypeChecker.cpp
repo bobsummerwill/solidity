@@ -2330,6 +2330,12 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 			);
 	}
 
+	if (setSalt && !m_evmVersion.hasCreate2())
+		m_errorReporter.typeError(
+			_functionCallOptions.location(),
+			"Unsupported call option \"salt\" (requires \"constantinople\" or newer)."
+		);
+
 	_functionCallOptions.annotation().type = expressionFunctionType->copyAndSetCallOptions(setGas, setValue, setSalt);
 	return false;
 }

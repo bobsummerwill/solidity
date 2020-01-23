@@ -9,6 +9,8 @@ contract C {
         new D{salt:"abc"}{salt:"a"}();
     }
 }
+// ====
+// EVMVersion: >=constantinople
 // ----
 // TypeError: (78-110): Duplicate option "gas".
 // TypeError: (120-154): Duplicate option "gas".

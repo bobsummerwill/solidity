@@ -11,6 +11,8 @@ contract C {
 		new D{gas: 2};
     }
 }
+// ====
+// EVMVersion: >=constantinople
 // ----
 // TypeError: (64-98): Cannot set option "value" on a non-payable function type.
 // TypeError: (64-98): Function call option "gas" cannot be used with "new".

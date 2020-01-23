@@ -7,4 +7,6 @@ contract C {
 		new D{salt:"aabbcc"};
     }
 }
+// ====
+// EVMVersion: >=constantinople
 // ----
