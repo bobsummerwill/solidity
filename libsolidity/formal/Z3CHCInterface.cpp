@@ -45,9 +45,9 @@ Z3CHCInterface::Z3CHCInterface():
 	p.set("fp.spacer.ground_pobs", false);
 	// These reduce performance but are needed for counterexamples.
 	// They might be removed when we use get_proof instead of get_answer.
-	//p.set("fp.xform.slice", false);
-	//p.set("fp.xform.inline_linear", false);
-	//p.set("fp.xform.inline_eager", false);
+	p.set("fp.xform.slice", false);
+	p.set("fp.xform.inline_linear", false);
+	p.set("fp.xform.inline_eager", false);
 	m_solver.set(p);
 }
 

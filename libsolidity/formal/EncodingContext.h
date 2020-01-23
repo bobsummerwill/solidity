@@ -37,6 +37,7 @@ class EncodingContext
 {
 public:
 	EncodingContext();
+	~EncodingContext();
 
 	/// Resets the entire context except for symbolic variables which stay
 	/// alive because of state variables and inlined function calls.
@@ -143,7 +144,7 @@ public:
 	Expression assertions();
 	void pushSolver();
 	void popSolver();
-	void addAssertion(Expression const& _e);
+	void addAssertion(Expression _e);
 	SolverInterface* solver()
 	{
 		solAssert(m_solver, "");

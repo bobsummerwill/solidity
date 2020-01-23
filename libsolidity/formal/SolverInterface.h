@@ -159,6 +159,11 @@ public:
 	Expression(s256 const& _number): Expression(_number.str(), Kind::Int) {}
 	Expression(bigint const& _number): Expression(_number.str(), Kind::Int) {}
 
+	~Expression()
+	{
+		if (name == "_2059_39")
+			std::cout << "DESTRUCTING " << this << std::endl;
+	}
 	Expression(Expression const&) = default;
 	Expression(Expression&&) = default;
 	Expression& operator=(Expression const&) = default;

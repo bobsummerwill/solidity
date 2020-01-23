@@ -28,8 +28,8 @@ ModelChecker::ModelChecker(
 	smt::SMTSolverChoice _enabledSolvers
 ):
 	//m_bmc(m_context, _errorReporter, _smtlib2Responses, _enabledSolvers),
-	m_chc(m_context, _errorReporter, _smtlib2Responses, _enabledSolvers),
-	m_context()
+	m_context(),
+	m_chc(m_context, _errorReporter, _smtlib2Responses, _enabledSolvers)
 {
 }
 

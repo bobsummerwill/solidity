@@ -33,6 +33,12 @@ EncodingContext::EncodingContext():
 	m_balances = make_unique<SymbolicVariable>(sort, "balances", *this);
 }
 
+EncodingContext::~EncodingContext()
+{
+	cout << "Encoding Context Destructor" << endl;
+	m_assertions.clear();
+}
+
 void EncodingContext::reset()
 {
 	resetAllVariables();
@@ -240,7 +246,7 @@ void EncodingContext::popSolver()
 	m_assertions.pop_back();
 }
 
-void EncodingContext::addAssertion(Expression const& _expr)
+void EncodingContext::addAssertion(Expression _expr)
 {
 	if (m_assertions.empty())
 		m_assertions.push_back(_expr);

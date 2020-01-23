@@ -64,10 +64,10 @@ private:
 	//BMC m_bmc;
 
 	/// Constrained Horn Clauses engine.
-	CHC m_chc;
 
 	/// Stores the context of the encoding.
 	smt::EncodingContext m_context;
+	CHC m_chc;
 };
 
 }

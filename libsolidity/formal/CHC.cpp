@@ -163,6 +163,7 @@ void CHC::analyze(SourceUnit const& _source)
 		if (!unsafeAssertions.count(assertion))
 			m_safeAssertions.insert(assertion);
 	*/
+	resetSourceAnalysis();
 }
 
 vector<string> CHC::unhandledQueries() const
