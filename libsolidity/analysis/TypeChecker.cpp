@@ -2240,6 +2240,13 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		m_errorReporter.fatalTypeError(_functionCallOptions.location(), "Expected callable expression before call options.");
 		return false;
 	}
+
+	if (dynamic_cast<FunctionCallOptions const*>(&_functionCallOptions.expression()))
+		m_errorReporter.typeError(
+			_functionCallOptions.expression().location(),
+			"Function call options already specified."
+		);
+
 	FunctionType::Kind kind = expressionFunctionType->kind();
 	if (
 		kind != FunctionType::Kind::Creation &&
@@ -2264,6 +2271,12 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 		{
 			if (kind == FunctionType::Kind::Creation)
 			{
+				if (setSalt)
+					m_errorReporter.typeError(
+						_functionCallOptions.location(),
+						"Duplicate option \"salt\"."
+					);
+
 				setSalt = true;
 				expectType(*_functionCallOptions.options()[i], *TypeProvider::fixedBytes(32));
 			}
@@ -2293,6 +2306,13 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 			else
 			{
 				expectType(*_functionCallOptions.options()[i], *TypeProvider::uint256());
+
+				if (setValue)
+					m_errorReporter.typeError(
+						_functionCallOptions.location(),
+						"Duplicate option \"value\"."
+					);
+
 				setValue = true;
 			}
 		}
@@ -2306,6 +2326,13 @@ bool TypeChecker::visit(FunctionCallOptions const& _functionCallOptions)
 			else
 			{
 				expectType(*_functionCallOptions.options()[i], *TypeProvider::uint256());
+
+				if (setGas)
+					m_errorReporter.typeError(
+						_functionCallOptions.location(),
+						"Duplicate option \"gas\"."
+					);
+
 				setGas = true;
 			}
 		}
