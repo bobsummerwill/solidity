@@ -688,6 +688,38 @@ void IRGeneratorForStatements::endVisit(FunctionCall const& _functionCall)
 	}
 }
 
+void IRGeneratorForStatements::endVisit(FunctionCallOptions const& _options)
+{
+	FunctionType const& previousType = dynamic_cast<FunctionType const&>(*_options.expression().annotation().type);
+
+	// TODO some function types do not have an address, some do not have an identifier.
+	defineExpressionPart(_options, "address") << m_context.variablePart(_options.expression(), "address") << "\n";
+	defineExpressionPart(_options, "functionIdentifier") << m_context.variablePart(_options.expression(), "functionIdentifier") << "\n";
+
+	if (previousType.bound())
+		defineExpressionPart(_options, "self") << m_context.variablePart(_options.expression(), "self") << "\n";
+
+	// Since options cannot be re-set, we can copy everything that is available.
+	if (previousType.gasSet())
+		defineExpressionPart(_options, "gas") << m_context.variablePart(_options.expression(), "gas") << "\n";
+	if (previousType.saltSet())
+		defineExpressionPart(_options, "salt") << m_context.variablePart(_options.expression(), "salt") << "\n";
+	if (previousType.valueSet())
+		defineExpressionPart(_options, "value") << m_context.variablePart(_options.expression(), "value") << "\n";
+
+	for (size_t i = 0; i < _options.names().size(); ++i)
+	{
+		string const& name = *_options.names()[i];
+		solAssert(name == "salt" || name == "gas" || name == "value", "");
+
+		Type const* optionType = TypeProvider::uint256();
+		if (name == "salt")
+			optionType = TypeProvider::fixedBytes(23);
+
+		defineExpressionPart(_options, name) << expressionAsType(*_options.options()[i], *optionType) << "\n";
+	}
+}
+
 void IRGeneratorForStatements::endVisit(MemberAccess const& _memberAccess)
 {
 	ASTString const& member = _memberAccess.memberName();
